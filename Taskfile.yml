@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: '3'
+
+vars:
+  ENV_LOCAL: ./config/local.yaml
+
+tasks:
+  run-local:
+    desc: run application with local config
+    cmds:
+      - go run ./cmd/order/main.go --config={{ .ENV_LOCAL }}
+  default:
+    cmds:
+      - task --list
+    silent: true
