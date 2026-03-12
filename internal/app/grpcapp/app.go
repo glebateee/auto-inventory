@@ -20,9 +20,10 @@ func New(
 	logger *slog.Logger,
 	host string,
 	port int,
+	provider server.Provider,
 ) *App {
 	srv := grpc.NewServer()
-	server.Register(srv)
+	server.Register(srv, provider)
 	return &App{
 		logger: logger,
 		srv:    srv,

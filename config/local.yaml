@@ -2,3 +2,10 @@ env: "local"
 grpc_config:
   host: "localhost"
   port: 7788
+db_config:
+  dbname: "inventory"
+  user: "postgres"
+  password: "postgres"
+  host: "localhost"
+  port: 6666
+  sslmode: "disable"

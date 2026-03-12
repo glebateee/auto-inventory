@@ -19,20 +19,23 @@ var (
 func main() {
 	cfg := config.MustLoad()
 	logger := setupLogger(cfg.Env)
-	logger.Info("application started")
-
+	logger.Debug("loaded configuration", slog.Any("cfg", cfg))
 	mainApp := app.New(
 		logger,
 		cfg.GRPCConfig.Host,
 		cfg.GRPCConfig.Port,
+		cfg.DBConfig.Name,
+		cfg.DBConfig.User,
+		cfg.DBConfig.Password,
+		cfg.DBConfig.Host,
+		cfg.DBConfig.Port,
+		cfg.DBConfig.SslMode,
 	)
-	logger.Info("starting main application dependencies")
 	go mainApp.MustStart()
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 	sig := <-stop
 	logger.Info("received system signal", slog.String("signal", sig.String()))
-	logger.Info("stopping main application dependencies")
 	mainApp.Stop()
 	logger.Info("application stopped")
 

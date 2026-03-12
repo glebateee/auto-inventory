@@ -10,11 +10,21 @@ import (
 type Config struct {
 	Env        string     `yaml:"env" env-default:"dev"`
 	GRPCConfig gRPCConfig `yaml:"grpc_config"`
+	DBConfig   dbConfig   `yaml:"db_config"`
 }
 
 type gRPCConfig struct {
 	Host string `yaml:"host" env-default:"localhost"`
 	Port int    `yaml:"port" env-default:"8877"`
+}
+
+type dbConfig struct {
+	Name     string `yaml:"dbname" env-required:"true"`
+	User     string `yaml:"user" env-required:"true"`
+	Password string `yaml:"password" env-required:"true"`
+	Host     string `yaml:"host" env-required:"true"`
+	Port     int    `yaml:"port" env-required:"true"`
+	SslMode  string `yaml:"sslmode" env-required:"true"`
 }
 
 var (
