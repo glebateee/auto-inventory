@@ -62,6 +62,15 @@ func New(
 	}, nil
 }
 
+func (s *Storage) ProductPageSizeCategory(
+	ctx context.Context,
+	offset int64,
+	limit int64,
+	categoryID int64,
+) ([]models.Product, int64, error) {
+	return nil, 0, storage.ErrNoRows
+}
+
 func (s *Storage) ProductPageSize(ctx context.Context, page int64, size int64) ([]models.Product, int64, error) {
 	sqlcTotal, err := s.querier.ProductTotal(ctx)
 	if err != nil {

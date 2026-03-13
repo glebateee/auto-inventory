@@ -24,6 +24,7 @@ var (
 
 type Provider interface {
 	ProductPageSize(ctx context.Context, page int64, size int64) ([]models.Product, int64, error)
+	ProductPageSizeCategory(ctx context.Context, offset int64, limit int64, categoryID int64) ([]models.Product, int64, error)
 }
 
 type serverApi struct {
@@ -31,6 +32,36 @@ type serverApi struct {
 	logger   *slog.Logger
 	provider Provider
 	validate *validator.Validate
+}
+
+func (s *serverApi) ProductPageSizeCategory(ctx context.Context, req *aiv1.ProductPageSizeCategoryRequest) (*aiv1.ProductPageSizeCategoryResponse, error) {
+	const op = "serverApi.ProductPageSizeCategory"
+	logger := s.logger.With(
+		slog.String("op", op),
+	)
+	validateDto := grpcserver.ProductPageSizeCategoryDTO{
+		Offset:     req.GetPage(),
+		Limit:      req.GetSize(),
+		CategoryID: req.GetCategoryId(),
+	}
+	err := s.validate.Struct(&validateDto)
+	if err != nil {
+		logger.Error("validation failed", sl.Err(ValidationError(err.(validator.ValidationErrors))))
+		return nil, status.Error(codes.InvalidArgument, ErrInvalid)
+	}
+	products, total, err := s.provider.ProductPageSizeCategory(ctx, validateDto.Offset, validateDto.Limit, validateDto.CategoryID)
+	if err != nil {
+		if errors.Is(err, provider.ErrInvalidParams) {
+			return nil, status.Error(codes.InvalidArgument, ErrInvalid)
+		}
+		return nil, status.Error(codes.Internal, ErrInternal)
+	}
+	outProducts := ToGRPCProductList(products)
+	return &aiv1.ProductPageSizeCategoryResponse{
+		Products:  outProducts,
+		Available: total,
+	}, nil
+
 }
 
 func (s *serverApi) ProductPageSize(ctx context.Context, req *aiv1.ProductPageSizeRequest) (*aiv1.ProductPageSizeResponse, error) {

@@ -82,6 +82,79 @@ func (q *Queries) ProductPageSize(ctx context.Context, arg ProductPageSizeParams
 	return items, nil
 }
 
+const productPageSizeCategory = `-- name: ProductPageSizeCategory :many
+SELECT 
+    p.id,          
+    p.sku,         
+    p.name,        
+    p.description, 
+    c.name AS category_name,
+    m.name AS manufacturer_name,
+    p.weight,
+    p.unit,   
+    p.price,       
+    p.baseprice,   
+    p.issueyear   
+FROM products AS p
+INNER JOIN categories AS c ON p.category_id = c.id
+INNER JOIN manufacturers AS m ON p.manufacturer_id = m.id
+WHERE c.id = $3
+OFFSET $1
+LIMIT $2
+`
+
+type ProductPageSizeCategoryParams struct {
+	Offset int32 `json:"offset"`
+	Limit  int32 `json:"limit"`
+	ID     int32 `json:"id"`
+}
+
+type ProductPageSizeCategoryRow struct {
+	ID               int32       `json:"id"`
+	Sku              string      `json:"sku"`
+	Name             string      `json:"name"`
+	Description      pgtype.Text `json:"description"`
+	CategoryName     string      `json:"category_name"`
+	ManufacturerName string      `json:"manufacturer_name"`
+	Weight           int32       `json:"weight"`
+	Unit             pgtype.Text `json:"unit"`
+	Price            int32       `json:"price"`
+	Baseprice        int32       `json:"baseprice"`
+	Issueyear        int16       `json:"issueyear"`
+}
+
+func (q *Queries) ProductPageSizeCategory(ctx context.Context, arg ProductPageSizeCategoryParams) ([]ProductPageSizeCategoryRow, error) {
+	rows, err := q.db.Query(ctx, productPageSizeCategory, arg.Offset, arg.Limit, arg.ID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ProductPageSizeCategoryRow
+	for rows.Next() {
+		var i ProductPageSizeCategoryRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Sku,
+			&i.Name,
+			&i.Description,
+			&i.CategoryName,
+			&i.ManufacturerName,
+			&i.Weight,
+			&i.Unit,
+			&i.Price,
+			&i.Baseprice,
+			&i.Issueyear,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const productTotal = `-- name: ProductTotal :one
 SELECT COUNT(*) AS total
 FROM products
@@ -89,6 +162,19 @@ FROM products
 
 func (q *Queries) ProductTotal(ctx context.Context) (int64, error) {
 	row := q.db.QueryRow(ctx, productTotal)
+	var total int64
+	err := row.Scan(&total)
+	return total, err
+}
+
+const productTotalCategory = `-- name: ProductTotalCategory :one
+SELECT COUNT(*) AS total
+FROM products
+WHERE producs.category_id = 1
+`
+
+func (q *Queries) ProductTotalCategory(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, productTotalCategory)
 	var total int64
 	err := row.Scan(&total)
 	return total, err

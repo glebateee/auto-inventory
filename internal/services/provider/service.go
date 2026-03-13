@@ -16,6 +16,7 @@ var (
 
 type ProductProvider interface {
 	ProductPageSize(ctx context.Context, page int64, size int64) ([]models.Product, int64, error)
+	ProductPageSizeCategory(ctx context.Context, offset int64, limit int64, categoryID int64) ([]models.Product, int64, error)
 }
 
 type ProviderService struct {
@@ -32,6 +33,26 @@ func New(
 		provider: provider,
 	}
 }
+func (ps *ProviderService) ProductPageSizeCategory(ctx context.Context, offset int64, limit int64, categoryID int64) ([]models.Product, int64, error) {
+	const op = "services.provider.ProductPageSize"
+	logger := ps.logger.With(
+		slog.String("op", op),
+		slog.Int64("page", offset),
+		slog.Int64("size", limit),
+		slog.Int64("category", categoryID),
+	)
+	logger.Info("processing request")
+	products, total, err := ps.provider.ProductPageSizeCategory(ctx, offset, limit, categoryID)
+	if err != nil {
+		if errors.Is(err, storage.ErrNoRows) {
+			logger.Warn("no rows found with provided parameters", slog.Int64("records", total))
+			return nil, total, fmt.Errorf("%s: %w", op, ErrInvalidParams)
+		}
+		return nil, 0, fmt.Errorf("%s: %w", op, err)
+	}
+	logger.Info("request processed successfully", slog.Int64("records", total))
+	return products, total, nil
+}
 
 func (ps *ProviderService) ProductPageSize(ctx context.Context, page int64, size int64) ([]models.Product, int64, error) {
 	const op = "services.provider.ProductPageSize"
@@ -44,7 +65,7 @@ func (ps *ProviderService) ProductPageSize(ctx context.Context, page int64, size
 	products, total, err := ps.provider.ProductPageSize(ctx, page, size)
 	if err != nil {
 		if errors.Is(err, storage.ErrNoRows) {
-			logger.Warn("no rows found with provided page and size", slog.Int64("records", total))
+			logger.Warn("no rows found with provided parameters", slog.Int64("records", total))
 			return nil, total, fmt.Errorf("%s: %w", op, ErrInvalidParams)
 		}
 		return nil, 0, fmt.Errorf("%s: %w", op, err)

@@ -13,6 +13,8 @@ github.com/glebateee/auto-proto v0.0.3 h1:rBqTgMG6fV72mtZ17oo4VAoMT5+et9NqC5tqmI
 github.com/glebateee/auto-proto v0.0.3/go.mod h1:Hb3zhw9OGcCGH+0EXldRYdQ1K44tACQPel38U6Aaufo=
 github.com/glebateee/auto-proto v0.0.4 h1:GQhYH9JUXzIJMVNuglGDgXcoVMKChbQGYxQB+wQE/DE=
 github.com/glebateee/auto-proto v0.0.4/go.mod h1:Hb3zhw9OGcCGH+0EXldRYdQ1K44tACQPel38U6Aaufo=
+github.com/glebateee/auto-proto v0.0.5 h1:ulpqbPb2tMoXrkqElYHxpakGf3mU4TWa4WlRJcKPN0k=
+github.com/glebateee/auto-proto v0.0.5/go.mod h1:Hb3zhw9OGcCGH+0EXldRYdQ1K44tACQPel38U6Aaufo=
 github.com/go-logr/logr v1.4.3 h1:CjnDlHq8ikf6E492q6eKboGOC0T8CDaOvkHCIg8idEI=
 github.com/go-logr/logr v1.4.3/go.mod h1:9T104GzyrTigFIr8wt5mBrctHMim0Nb2HLGrmQ40KvY=
 github.com/go-logr/stdr v1.2.2 h1:hSWxHoqTgW2S2qGc0LTAI563KZ5YKYRhT3MFKZMbjag=
