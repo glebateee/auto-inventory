@@ -2,13 +2,20 @@ package provider
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"log/slog"
 
 	"github.com/glebateee/auto-inventory/internal/domain/models"
+	"github.com/glebateee/auto-inventory/internal/storage"
+)
+
+var (
+	ErrInvalidParams = errors.New("invalid parameters for request")
 )
 
 type ProductProvider interface {
-	ProductPageSize(ctx context.Context, page int64, size int64) ([]models.Product, int64)
+	ProductPageSize(ctx context.Context, page int64, size int64) ([]models.Product, int64, error)
 }
 
 type ProviderService struct {
@@ -26,7 +33,22 @@ func New(
 	}
 }
 
-func (ps *ProviderService) ProductPageSize(ctx context.Context, page int64, size int64) ([]models.Product, int64) {
-	products, total := ps.provider.ProductPageSize(ctx, page, size)
-	return products, total
+func (ps *ProviderService) ProductPageSize(ctx context.Context, page int64, size int64) ([]models.Product, int64, error) {
+	const op = "services.provider.ProductPageSize"
+	logger := ps.logger.With(
+		slog.String("op", op),
+		slog.Int64("page", page),
+		slog.Int64("size", size),
+	)
+	logger.Info("processing request")
+	products, total, err := ps.provider.ProductPageSize(ctx, page, size)
+	if err != nil {
+		if errors.Is(err, storage.ErrNoRows) {
+			logger.Warn("no rows found with provided page and size", slog.Int64("records", total))
+			return nil, total, fmt.Errorf("%s: %w", op, ErrInvalidParams)
+		}
+		return nil, 0, fmt.Errorf("%s: %w", op, err)
+	}
+	logger.Info("request processed successfully", slog.Int64("records", total))
+	return products, total, nil
 }

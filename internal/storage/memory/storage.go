@@ -31,7 +31,7 @@ func (s *Storage) Seed() {
 			Weight:       int64(gofakeit.UintRange(10, 20)),
 			Price:        int64(gofakeit.UintRange(100, 200)),
 			BasePrice:    int64(gofakeit.UintRange(100, 200)),
-			IssueYear:    int64(gofakeit.Year()),
+			IssueYear:    int16(gofakeit.Year()),
 		}
 	}
 }

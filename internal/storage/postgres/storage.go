@@ -2,14 +2,18 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 
 	"github.com/glebateee/auto-inventory/internal/domain/models"
+	"github.com/glebateee/auto-inventory/internal/storage"
+	sqlc "github.com/glebateee/auto-inventory/internal/storage/postgres/sqlc/gen"
 	"github.com/jackc/pgx/v5"
 )
 
 type Storage struct {
-	conn *pgx.Conn
+	querier sqlc.Querier
 }
 
 const (
@@ -54,10 +58,37 @@ func New(
 		return nil, err
 	}
 	return &Storage{
-		conn: conn2,
+		querier: sqlc.New(conn2),
 	}, nil
 }
 
-func (s *Storage) ProductPageSize(ctx context.Context, page int64, size int64) ([]models.Product, int64) {
-	return nil, 0
+func (s *Storage) ProductPageSize(ctx context.Context, page int64, size int64) ([]models.Product, int64, error) {
+	sqlcTotal, err := s.querier.ProductTotal(ctx)
+	if err != nil {
+		return nil, 0, err
+	}
+	sqlcProducts, err := s.querier.ProductPageSize(ctx, sqlc.ProductPageSizeParams{Offset: int32((page - 1) * size), Limit: int32(size)})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, 0, storage.ErrNoRows
+		}
+		return nil, sqlcTotal, err
+	}
+	products := make([]models.Product, 0, len(sqlcProducts))
+	for _, p := range sqlcProducts {
+		products = append(products, models.Product{
+			Id:           int64(p.ID),
+			Sku:          p.Sku,
+			Name:         p.Name,
+			Description:  p.Description.String,
+			Category:     p.CategoryName,
+			Manufacturer: p.ManufacturerName,
+			Weight:       int64(p.Weight),
+			Price:        int64(p.Price),
+			BasePrice:    int64(p.Baseprice),
+			IssueYear:    p.Issueyear,
+		})
+	}
+
+	return products, sqlcTotal, nil
 }

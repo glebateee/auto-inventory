@@ -4,12 +4,27 @@ version: '3'
 
 vars:
   ENV_LOCAL: ./config/local.yaml
+  GOOSE_DRIVER: postgres
+  GOOSE_DBSTRING: 'dbname=inventory user=postgres password=postgres host=localhost port=6666 sslmode=disable'
+  GOOSE_MIGRATION_DIR: './migrations/postgres'
+  GOOSE_TABLE: 'public.goose_migrations'
 
 tasks:
+
+  migrate:
+    desc: run migrations with cli args
+    vars:
+      CMD: '{{.CLI_ARGS | default "up"}}'
+    cmds:
+      - goose -dir {{ .GOOSE_MIGRATION_DIR }} {{ .GOOSE_DRIVER }} "{{ .GOOSE_DBSTRING }}" {{.CMD }}
+    env:
+      GOOSE_TABLE: '{{.GOOSE_TABLE}}'
+
   run-local:
     desc: run application with local config
     cmds:
       - go run ./cmd/order/main.go --config={{ .ENV_LOCAL }}
+      
   default:
     cmds:
       - task --list

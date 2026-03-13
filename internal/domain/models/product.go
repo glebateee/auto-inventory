@@ -10,5 +10,5 @@ type Product struct {
 	Weight       int64
 	Price        int64
 	BasePrice    int64
-	IssueYear    int64
+	IssueYear    int16
 }
