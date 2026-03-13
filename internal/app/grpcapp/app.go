@@ -23,7 +23,7 @@ func New(
 	provider server.Provider,
 ) *App {
 	srv := grpc.NewServer()
-	server.Register(srv, provider)
+	server.Register(srv, logger, provider)
 	return &App{
 		logger: logger,
 		srv:    srv,

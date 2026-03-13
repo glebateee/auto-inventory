@@ -74,21 +74,6 @@ func (s *Storage) ProductPageSize(ctx context.Context, page int64, size int64) (
 		}
 		return nil, sqlcTotal, err
 	}
-	products := make([]models.Product, 0, len(sqlcProducts))
-	for _, p := range sqlcProducts {
-		products = append(products, models.Product{
-			Id:           int64(p.ID),
-			Sku:          p.Sku,
-			Name:         p.Name,
-			Description:  p.Description.String,
-			Category:     p.CategoryName,
-			Manufacturer: p.ManufacturerName,
-			Weight:       int64(p.Weight),
-			Price:        int64(p.Price),
-			BasePrice:    int64(p.Baseprice),
-			IssueYear:    p.Issueyear,
-		})
-	}
-
+	products := FromSqlcProductList(sqlcProducts)
 	return products, sqlcTotal, nil
 }
