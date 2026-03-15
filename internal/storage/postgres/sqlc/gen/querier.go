@@ -6,13 +6,15 @@ package sqlc
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
 	ProductPageSize(ctx context.Context, arg ProductPageSizeParams) ([]ProductPageSizeRow, error)
 	ProductPageSizeCategory(ctx context.Context, arg ProductPageSizeCategoryParams) ([]ProductPageSizeCategoryRow, error)
 	ProductTotal(ctx context.Context) (int64, error)
-	ProductTotalCategory(ctx context.Context) (int64, error)
+	ProductTotalCategory(ctx context.Context, categoryID pgtype.Int4) (int64, error)
 }
 
 var _ Querier = (*Queries)(nil)

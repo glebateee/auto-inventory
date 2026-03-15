@@ -168,13 +168,13 @@ func (q *Queries) ProductTotal(ctx context.Context) (int64, error) {
 }
 
 const productTotalCategory = `-- name: ProductTotalCategory :one
-SELECT COUNT(*) AS total
+SELECT COUNT(category_id) AS total
 FROM products
-WHERE producs.category_id = 1
+WHERE category_id = $1
 `
 
-func (q *Queries) ProductTotalCategory(ctx context.Context) (int64, error) {
-	row := q.db.QueryRow(ctx, productTotalCategory)
+func (q *Queries) ProductTotalCategory(ctx context.Context, categoryID pgtype.Int4) (int64, error) {
+	row := q.db.QueryRow(ctx, productTotalCategory, categoryID)
 	var total int64
 	err := row.Scan(&total)
 	return total, err

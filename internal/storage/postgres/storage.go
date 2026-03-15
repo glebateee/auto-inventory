@@ -10,19 +10,13 @@ import (
 	"github.com/glebateee/auto-inventory/internal/storage"
 	sqlc "github.com/glebateee/auto-inventory/internal/storage/postgres/sqlc/gen"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Storage struct {
 	querier sqlc.Querier
 }
 
-const (
-	dbNotExistsCode = "3D000"
-)
-
-func newConnString(dbname string, user string, password string, host string, port int, sslmode string) string {
-	return fmt.Sprintf("dbname=%s user=%s password=%s host=%s port=%d sslmode=%s", dbname, user, password, host, port, sslmode)
-}
 func New(
 	dbname string,
 	user string,
@@ -35,10 +29,6 @@ func New(
 	conn, err := pgx.Connect(context.Background(), connString)
 	if err != nil {
 		return nil, err
-		// var pgErr pgconn.PgError
-		// if ok := errors.As(err, &pgErr); ok && pgErr.Code != dbNotExistsCode {
-		// 	return nil, err
-		// }
 	}
 	defer conn.Close(context.Background())
 	var exists bool
@@ -68,7 +58,25 @@ func (s *Storage) ProductPageSizeCategory(
 	limit int64,
 	categoryID int64,
 ) ([]models.Product, int64, error) {
-	return nil, 0, storage.ErrNoRows
+	pgCategoryId := pgtype.Int4{Int32: int32(categoryID), Valid: true}
+	sqlcTotal, err := s.querier.ProductTotalCategory(ctx, pgCategoryId)
+	fmt.Println(sqlcTotal, categoryID)
+	if err != nil {
+		return nil, 0, err
+	}
+	sqlcProducts, err := s.querier.ProductPageSizeCategory(ctx, sqlc.ProductPageSizeCategoryParams{
+		Offset: int32(offset),
+		Limit:  int32(limit),
+		ID:     int32(categoryID),
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, sqlcTotal, storage.ErrNoRows
+		}
+		return nil, sqlcTotal, err
+	}
+	products := FromSqlcProductListCat(sqlcProducts)
+	return products, sqlcTotal, nil
 }
 
 func (s *Storage) ProductPageSize(ctx context.Context, page int64, size int64) ([]models.Product, int64, error) {
@@ -79,10 +87,14 @@ func (s *Storage) ProductPageSize(ctx context.Context, page int64, size int64) (
 	sqlcProducts, err := s.querier.ProductPageSize(ctx, sqlc.ProductPageSizeParams{Offset: int32((page - 1) * size), Limit: int32(size)})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, 0, storage.ErrNoRows
+			return nil, sqlcTotal, storage.ErrNoRows
 		}
 		return nil, sqlcTotal, err
 	}
 	products := FromSqlcProductList(sqlcProducts)
 	return products, sqlcTotal, nil
+}
+
+func newConnString(dbname string, user string, password string, host string, port int, sslmode string) string {
+	return fmt.Sprintf("dbname=%s user=%s password=%s host=%s port=%d sslmode=%s", dbname, user, password, host, port, sslmode)
 }

@@ -3,11 +3,19 @@
 version: '3'
 
 vars:
+# main app configuration 
   ENV_LOCAL: ./config/local.yaml
   GOOSE_DRIVER: postgres
-  GOOSE_DBSTRING: 'dbname=inventory user=postgres password=postgres host=localhost port=6666 sslmode=disable'
+  GOOSE_DBSTRING: 'dbname=inventory user=postgres password=postgres host=localhost port=5432 sslmode=disable'
   GOOSE_MIGRATION_DIR: './migrations/postgres'
   GOOSE_TABLE: 'public.goose_migrations'
+
+# test main app configuration 
+  ENV_TEST_LOCAL: ./tests/config/local.yaml
+  GOOSE_TEST_DBSTRING: 'dbname=test_inventory user=postgres password=postgres host=localhost port=5432 sslmode=disable'
+  GOOSE_TEST_MIGRATION_DIR: ./tests/migrations/postgres
+  GOOSE_TEST_TABLE: 'public.goose_tests_migrations'
+
 
 tasks:
 
@@ -16,7 +24,7 @@ tasks:
     vars:
       CMD: '{{.CLI_ARGS | default "up"}}'
     cmds:
-      - goose -dir {{ .GOOSE_MIGRATION_DIR }} {{ .GOOSE_DRIVER }} "{{ .GOOSE_DBSTRING }}" {{.CMD }}
+      - goose -dir {{ .GOOSE_MIGRATION_DIR }} {{ .GOOSE_DRIVER }} "{{ .GOOSE_DBSTRING }}" {{ .CMD }}
     env:
       GOOSE_TABLE: '{{.GOOSE_TABLE}}'
 
@@ -24,7 +32,21 @@ tasks:
     desc: run application with local config
     cmds:
       - go run ./cmd/order/main.go --config={{ .ENV_LOCAL }}
-      
+
+  migrate-test:
+    desc: run test migrations with cli args
+    vars:
+      CMD: '{{ .CLI_ARGS | default "up" }}'
+    cmds:
+      - goose -dir {{ .GOOSE_TEST_MIGRATION_DIR }} {{ .GOOSE_DRIVER }} "{{ .GOOSE_TEST_DBSTRING }}" {{ .CMD }}
+    env:
+      GOOSE_TABLE: '{{.GOOSE_TEST_TABLE}}'
+
+  run-local-test:
+    desc: run application for tests with local config
+    cmds:
+      - go run ./cmd/order/main.go --config={{ .ENV_TEST_LOCAL }}
+     
   default:
     cmds:
       - task --list

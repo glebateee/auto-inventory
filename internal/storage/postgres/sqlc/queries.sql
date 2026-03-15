@@ -42,6 +42,6 @@ OFFSET $1
 LIMIT $2;
 
 -- name: ProductTotalCategory :one
-SELECT COUNT(*) AS total
+SELECT COUNT(category_id) AS total
 FROM products
-WHERE producs.category_id = 1;
+WHERE category_id = $1;

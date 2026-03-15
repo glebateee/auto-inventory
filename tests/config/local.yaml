@@ -1,9 +1,9 @@
 env: "local"
 grpc_config:
   host: "localhost"
-  port: 7788
+  port: 7789
 db_config:
-  dbname: "inventory"
+  dbname: "test_inventory"
   user: "postgres"
   password: "postgres"
   host: "localhost"
