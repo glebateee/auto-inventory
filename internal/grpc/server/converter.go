@@ -3,6 +3,7 @@ package server
 import (
 	"github.com/glebateee/auto-inventory/internal/domain/models"
 	aiv1 "github.com/glebateee/auto-proto/gen/go/inventory"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func ToGRPCProductList(products []models.Product) []*aiv1.Product {
@@ -19,6 +20,8 @@ func ToGRPCProductList(products []models.Product) []*aiv1.Product {
 			Price:        p.Price,
 			BasePrice:    p.BasePrice,
 			IssueYear:    int64(p.IssueYear),
+			CreatedAt:    timestamppb.New(p.CreatedAt),
+			UpdatedAt:    timestamppb.New(p.UpdatedAt),
 		})
 	}
 	return outProducts

@@ -23,7 +23,9 @@ SELECT
     p.unit,   
     p.price,       
     p.baseprice,   
-    p.issueyear   
+    p.issueyear,
+    p.created_at,
+    p.updated_at   
 FROM products AS p
 INNER JOIN categories AS c ON p.category_id = c.id
 INNER JOIN manufacturers AS m ON p.manufacturer_id = m.id
@@ -37,17 +39,19 @@ type ProductPageSizeParams struct {
 }
 
 type ProductPageSizeRow struct {
-	ID               int32       `json:"id"`
-	Sku              string      `json:"sku"`
-	Name             string      `json:"name"`
-	Description      pgtype.Text `json:"description"`
-	CategoryName     string      `json:"category_name"`
-	ManufacturerName string      `json:"manufacturer_name"`
-	Weight           int32       `json:"weight"`
-	Unit             pgtype.Text `json:"unit"`
-	Price            int32       `json:"price"`
-	Baseprice        int32       `json:"baseprice"`
-	Issueyear        int16       `json:"issueyear"`
+	ID               int32              `json:"id"`
+	Sku              string             `json:"sku"`
+	Name             string             `json:"name"`
+	Description      pgtype.Text        `json:"description"`
+	CategoryName     string             `json:"category_name"`
+	ManufacturerName string             `json:"manufacturer_name"`
+	Weight           int32              `json:"weight"`
+	Unit             pgtype.Text        `json:"unit"`
+	Price            int32              `json:"price"`
+	Baseprice        int32              `json:"baseprice"`
+	Issueyear        int16              `json:"issueyear"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
 }
 
 func (q *Queries) ProductPageSize(ctx context.Context, arg ProductPageSizeParams) ([]ProductPageSizeRow, error) {
@@ -71,6 +75,8 @@ func (q *Queries) ProductPageSize(ctx context.Context, arg ProductPageSizeParams
 			&i.Price,
 			&i.Baseprice,
 			&i.Issueyear,
+			&i.CreatedAt,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -94,7 +100,9 @@ SELECT
     p.unit,   
     p.price,       
     p.baseprice,   
-    p.issueyear   
+    p.issueyear,
+    p.created_at,
+    p.updated_at   
 FROM products AS p
 INNER JOIN categories AS c ON p.category_id = c.id
 INNER JOIN manufacturers AS m ON p.manufacturer_id = m.id
@@ -110,17 +118,19 @@ type ProductPageSizeCategoryParams struct {
 }
 
 type ProductPageSizeCategoryRow struct {
-	ID               int32       `json:"id"`
-	Sku              string      `json:"sku"`
-	Name             string      `json:"name"`
-	Description      pgtype.Text `json:"description"`
-	CategoryName     string      `json:"category_name"`
-	ManufacturerName string      `json:"manufacturer_name"`
-	Weight           int32       `json:"weight"`
-	Unit             pgtype.Text `json:"unit"`
-	Price            int32       `json:"price"`
-	Baseprice        int32       `json:"baseprice"`
-	Issueyear        int16       `json:"issueyear"`
+	ID               int32              `json:"id"`
+	Sku              string             `json:"sku"`
+	Name             string             `json:"name"`
+	Description      pgtype.Text        `json:"description"`
+	CategoryName     string             `json:"category_name"`
+	ManufacturerName string             `json:"manufacturer_name"`
+	Weight           int32              `json:"weight"`
+	Unit             pgtype.Text        `json:"unit"`
+	Price            int32              `json:"price"`
+	Baseprice        int32              `json:"baseprice"`
+	Issueyear        int16              `json:"issueyear"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
 }
 
 func (q *Queries) ProductPageSizeCategory(ctx context.Context, arg ProductPageSizeCategoryParams) ([]ProductPageSizeCategoryRow, error) {
@@ -144,6 +154,8 @@ func (q *Queries) ProductPageSizeCategory(ctx context.Context, arg ProductPageSi
 			&i.Price,
 			&i.Baseprice,
 			&i.Issueyear,
+			&i.CreatedAt,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}

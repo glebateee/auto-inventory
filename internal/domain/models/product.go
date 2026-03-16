@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type Product struct {
 	Id           int64
 	Sku          string
@@ -11,4 +13,6 @@ type Product struct {
 	Price        int64
 	BasePrice    int64
 	IssueYear    int16
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }

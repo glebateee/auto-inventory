@@ -9,26 +9,32 @@ import (
 )
 
 type Category struct {
-	ID   int32  `json:"id"`
-	Name string `json:"name"`
+	ID        int32              `json:"id"`
+	Name      string             `json:"name"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
 type Manufacturer struct {
-	ID      int32  `json:"id"`
-	Name    string `json:"name"`
-	Country string `json:"country"`
+	ID        int32              `json:"id"`
+	Name      string             `json:"name"`
+	Country   string             `json:"country"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
 type Product struct {
-	ID             int32       `json:"id"`
-	Sku            string      `json:"sku"`
-	Name           string      `json:"name"`
-	Description    pgtype.Text `json:"description"`
-	CategoryID     pgtype.Int4 `json:"category_id"`
-	ManufacturerID pgtype.Int4 `json:"manufacturer_id"`
-	Weight         int32       `json:"weight"`
-	Unit           pgtype.Text `json:"unit"`
-	Price          int32       `json:"price"`
-	Baseprice      int32       `json:"baseprice"`
-	Issueyear      int16       `json:"issueyear"`
+	ID             int32              `json:"id"`
+	Sku            string             `json:"sku"`
+	Name           string             `json:"name"`
+	Description    pgtype.Text        `json:"description"`
+	CategoryID     pgtype.Int4        `json:"category_id"`
+	ManufacturerID pgtype.Int4        `json:"manufacturer_id"`
+	Weight         int32              `json:"weight"`
+	Unit           pgtype.Text        `json:"unit"`
+	Price          int32              `json:"price"`
+	Baseprice      int32              `json:"baseprice"`
+	Issueyear      int16              `json:"issueyear"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
 }

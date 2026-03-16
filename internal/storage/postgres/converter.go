@@ -19,6 +19,8 @@ func FromSqlcProductList(sqlcProducts []sqlc.ProductPageSizeRow) []models.Produc
 			Price:        int64(p.Price),
 			BasePrice:    int64(p.Baseprice),
 			IssueYear:    p.Issueyear,
+			CreatedAt:    p.CreatedAt.Time,
+			UpdatedAt:    p.UpdatedAt.Time,
 		})
 	}
 	return products
@@ -38,6 +40,8 @@ func FromSqlcProductListCat(sqlcProducts []sqlc.ProductPageSizeCategoryRow) []mo
 			Price:        int64(p.Price),
 			BasePrice:    int64(p.Baseprice),
 			IssueYear:    p.Issueyear,
+			CreatedAt:    p.CreatedAt.Time,
+			UpdatedAt:    p.UpdatedAt.Time,
 		})
 	}
 	return products

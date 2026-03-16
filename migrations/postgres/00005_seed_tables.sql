@@ -1,4 +1,5 @@
 -- +goose Up
+-- +goose StatementBegin
 INSERT INTO categories (name) VALUES
 ('Brake System'),
 ('Engine Parts'),
@@ -6,15 +7,19 @@ INSERT INTO categories (name) VALUES
 ('Electrical'),
 ('Exhaust System'),
 ('Transmission');
+-- +goose StatementEnd
 
--- Insert manufacturers (4 records)
+
+-- +goose StatementBegin
 INSERT INTO manufacturers (name, country) VALUES
 ('Bosch', 'Germany'),
 ('Denso', 'Japan'),
 ('Valeo', 'France'),
 ('Delphi', 'USA');
+-- +goose StatementEnd
 
--- Insert products (20 records)
+
+-- +goose StatementBegin
 INSERT INTO products (
     sku, name, description, category_id, manufacturer_id, weight, unit, price, baseprice, issueyear
 ) VALUES
@@ -50,9 +55,11 @@ INSERT INTO products (
 ('TR-5678', 'Gearbox Mount', 'Manual transmission mount', 6, 3, 2, 'pc.', 4100, 3200, 2023),
 ('TR-9012', 'CV Joint', 'Outer CV joint', 6, 4, 2, 'pc.', 5900, 4500, 2024)
 ON CONFLICT DO NOTHING ;
+-- +goose StatementEnd
+
 
 -- +goose Down
--- Delete products (by SKU)
+-- +goose StatementBegin
 DELETE FROM products WHERE sku IN (
     'BP-1234', 'BP-5678', 'BP-9012', 'BP-3456',
     'EP-7890', 'EP-2345', 'EP-6789', 'EP-0123',
@@ -61,9 +68,13 @@ DELETE FROM products WHERE sku IN (
     'EX-2345', 'EX-6789',
     'TR-1234', 'TR-5678', 'TR-9012'
 );
+-- +goose StatementEnd
 
--- Delete manufacturers (by ID)
+-- +goose StatementBegin
 DELETE FROM manufacturers WHERE id IN (1, 2, 3, 4);
+-- +goose StatementEnd
 
--- Delete categories (by ID)
+-- +goose StatementBegin
 DELETE FROM categories WHERE id IN (1, 2, 3, 4, 5, 6);
+-- +goose StatementEnd
+
