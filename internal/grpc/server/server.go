@@ -48,8 +48,30 @@ func (s *serverApi) ProductList(ctx context.Context, req *aiv1.ProductListReques
 	}, nil
 }
 
-func (s *serverApi) UpdateProduct(context.Context, *aiv1.UpdateProductRequest) (*aiv1.UpdateProductResponse, error) {
-	panic("unimplemented")
+func (s *serverApi) UpdateProduct(ctx context.Context, req *aiv1.UpdateProductRequest) (*aiv1.UpdateProductResponse, error) {
+	const op = "serverApi.UpdateProduct"
+	logger := s.logger.With(
+		slog.String("op", op),
+	)
+	fields := req.GetFields()
+	validateDto := grpcserver.UpdateProductDTO{
+		Sku:          req.GetSku(),
+		Name:         fields.GetName(),
+		Description:  fields.GetDescription(),
+		Category:     fields.GetCategory(),
+		Manufacturer: fields.GetManufacturer(),
+		Weight:       fields.GetWeight(),
+		Price:        fields.GetPrice(),
+		BasePrice:    fields.GetBasePrice(),
+		IssueYear:    fields.GetIssueYear(),
+	}
+	err := s.validate.Struct(&validateDto)
+	if err != nil {
+		logger.Error("validation failed", sl.Err(ValidationError(err.(validator.ValidationErrors))))
+		return nil, status.Error(codes.InvalidArgument, ErrInvalid)
+	}
+
+	domainFields := dtoToUpdateFields(&validateDto, req.UpdateMask)
 }
 
 func (s *serverApi) ProductPageSizeCategory(ctx context.Context, req *aiv1.ProductPageSizeCategoryRequest) (*aiv1.ProductPageSizeCategoryResponse, error) {
