@@ -46,7 +46,7 @@ func (s *serverApi) ProductList(ctx context.Context, req *aiv1.ProductListReques
 	return &aiv1.ProductListResponse{
 		Products: ToGRPCProductList(products),
 	}, nil
-}
+}ss
 
 func (s *serverApi) UpdateProduct(ctx context.Context, req *aiv1.UpdateProductRequest) (*aiv1.UpdateProductResponse, error) {
 	const op = "serverApi.UpdateProduct"
