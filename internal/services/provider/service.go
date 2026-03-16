@@ -7,7 +7,9 @@ import (
 	"log/slog"
 
 	"github.com/glebateee/auto-inventory/internal/domain/models"
+	"github.com/glebateee/auto-inventory/internal/lib/sl"
 	"github.com/glebateee/auto-inventory/internal/storage"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
 var (
@@ -18,6 +20,7 @@ type ProductProvider interface {
 	ProductPageSize(ctx context.Context, page int64, size int64) ([]models.Product, int64, error)
 	ProductPageSizeCategory(ctx context.Context, offset int64, limit int64, categoryID int64) ([]models.Product, int64, error)
 	Products(ctx context.Context) ([]models.Product, error)
+	UpdateProduct(ctx context.Context, sku string, fields *models.UpdateProductFields, mask *fieldmaskpb.FieldMask) (*models.Product, error)
 }
 
 type ProviderService struct {
@@ -33,6 +36,28 @@ func New(
 		logger:   logger,
 		provider: provider,
 	}
+}
+
+func (ps *ProviderService) UpdateProduct(
+	ctx context.Context,
+	sku string,
+	fields *models.UpdateProductFields,
+	mask *fieldmaskpb.FieldMask,
+) (*models.Product, error) {
+	const op = "services.provider.UpdateProduct"
+	logger := ps.logger.With(
+		slog.String("op", op),
+		slog.String("sku", sku),
+	)
+	logger.Info("updating product")
+	product, err := ps.provider.UpdateProduct(ctx, sku, fields, mask)
+	if err != nil {
+		logger.Error("failed to update product", sl.Err(err))
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+
+	logger.Info("product updated successfully", slog.Int64("id", product.Id))
+	return product, nil
 }
 
 func (ps *ProviderService) Products(ctx context.Context) ([]models.Product, error) {

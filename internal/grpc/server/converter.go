@@ -26,3 +26,23 @@ func ToGRPCProductList(products []models.Product) []*aiv1.Product {
 	}
 	return outProducts
 }
+
+func ToGRPCProduct(p *models.Product) *aiv1.Product {
+	if p == nil {
+		return nil
+	}
+	return &aiv1.Product{
+		Id:           p.Id,
+		Sku:          p.Sku,
+		Name:         p.Name,
+		Description:  p.Description,
+		Category:     p.Category,
+		Manufacturer: p.Manufacturer,
+		Weight:       p.Weight,
+		Price:        p.Price,
+		BasePrice:    p.BasePrice,
+		IssueYear:    int64(p.IssueYear),
+		CreatedAt:    timestamppb.New(p.CreatedAt),
+		UpdatedAt:    timestamppb.New(p.UpdatedAt),
+	}
+}

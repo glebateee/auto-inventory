@@ -15,8 +15,8 @@ type UpdateProductDTO struct {
 	Sku          string `validate:"required,min=3,max=50"`
 	Name         string `validate:"omitempty,min=2,max=50"`
 	Description  string `validate:"omitempty,max=1000"`
-	Category     string `validate:"omitempty,min=2,max=255"`
-	Manufacturer string `validate:"omitempty,min=2,max=255"`
+	Category     string `validate:"omitempty,min=1,max=255"`
+	Manufacturer string `validate:"omitempty,min=1,max=255"`
 	Weight       int64  `validate:"omitempty,min=0"`
 	Price        int64  `validate:"omitempty,min=0"`
 	BasePrice    int64  `validate:"omitempty,min=0"`

@@ -3,11 +3,14 @@ package server
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log/slog"
+	"reflect"
 	"strings"
 
 	"github.com/glebateee/auto-inventory/internal/domain/models"
 	"github.com/glebateee/auto-inventory/internal/dto/grpcserver"
+	"github.com/glebateee/auto-inventory/internal/dto/grpcserver/converter"
 	"github.com/glebateee/auto-inventory/internal/lib/sl"
 	"github.com/glebateee/auto-inventory/internal/services/provider"
 	aiv1 "github.com/glebateee/auto-proto/gen/go/inventory"
@@ -15,9 +18,10 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
-var (
+const (
 	ErrInternal = "internal server error"
 	ErrInvalid  = "invalid params"
 )
@@ -26,6 +30,7 @@ type Provider interface {
 	ProductPageSize(ctx context.Context, page int64, size int64) ([]models.Product, int64, error)
 	ProductPageSizeCategory(ctx context.Context, offset int64, limit int64, categoryID int64) ([]models.Product, int64, error)
 	Products(ctx context.Context) ([]models.Product, error)
+	UpdateProduct(ctx context.Context, sku string, fields *models.UpdateProductFields, mask *fieldmaskpb.FieldMask) (*models.Product, error)
 }
 
 type serverApi struct {
@@ -46,32 +51,94 @@ func (s *serverApi) ProductList(ctx context.Context, req *aiv1.ProductListReques
 	return &aiv1.ProductListResponse{
 		Products: ToGRPCProductList(products),
 	}, nil
-}ss
+}
 
+func validateUpdateDTO(model *models.UpdateProductFields, grpcMsg *aiv1.UpdateProductFields) (map[string]reflect.Value, error) {
+	grpcMsgType := reflect.TypeOf(grpcMsg).Elem()
+	fields, err := converter.UpdateDTOTagsMap(model)
+	if err != nil {
+		return nil, err
+	}
+	fmt.Println(fields)
+	notFoundFields := make([]string, 0, 3)
+	for i := range grpcMsgType.NumField() {
+		field := grpcMsgType.Field(i)
+		if !field.IsExported() {
+			continue
+		}
+		tag, ok := field.Tag.Lookup("json")
+		if !ok {
+			return nil, fmt.Errorf("json tag not found for grpc field %s", field.Name)
+		}
+		jsonName := strings.Split(tag, ",")[0]
+		if _, ok := fields[jsonName]; !ok {
+			notFoundFields = append(notFoundFields, jsonName)
+		}
+	}
+	if len(notFoundFields) > 0 {
+		return nil, fmt.Errorf("update tag not found in dto for fields: %s", strings.Join(notFoundFields, ", "))
+	}
+	return fields, nil
+}
 func (s *serverApi) UpdateProduct(ctx context.Context, req *aiv1.UpdateProductRequest) (*aiv1.UpdateProductResponse, error) {
 	const op = "serverApi.UpdateProduct"
 	logger := s.logger.With(
 		slog.String("op", op),
 	)
-	fields := req.GetFields()
-	validateDto := grpcserver.UpdateProductDTO{
-		Sku:          req.GetSku(),
-		Name:         fields.GetName(),
-		Description:  fields.GetDescription(),
-		Category:     fields.GetCategory(),
-		Manufacturer: fields.GetManufacturer(),
-		Weight:       fields.GetWeight(),
-		Price:        fields.GetPrice(),
-		BasePrice:    fields.GetBasePrice(),
-		IssueYear:    fields.GetIssueYear(),
+	if req.Fields == nil {
+		return nil, status.Error(codes.InvalidArgument, "fields must be provided")
 	}
-	err := s.validate.Struct(&validateDto)
-	if err != nil {
-		logger.Error("validation failed", sl.Err(ValidationError(err.(validator.ValidationErrors))))
-		return nil, status.Error(codes.InvalidArgument, ErrInvalid)
+	if req.UpdateMask == nil || len(req.UpdateMask.Paths) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "update_mask must be provided and non-empty")
 	}
+	model := &models.UpdateProductFields{}
 
-	domainFields := dtoToUpdateFields(&validateDto, req.UpdateMask)
+	fields, err := validateUpdateDTO(model, req.GetFields())
+	if err != nil {
+		logger.Error("validation dto failed", sl.Err(err))
+		return nil, status.Error(codes.Internal, ErrInternal)
+	}
+	fmt.Println(fields)
+	dto := grpcserver.UpdateProductDTO{}
+	converter.DtoToUpdateFields(model, req.GetUpdateMask())
+	return &aiv1.UpdateProductResponse{}, nil
+	// validateDto := grpcserver.UpdateProductDTO{
+	// 	Sku:          req.GetSku(),
+	// 	Name:         fields.GetName(),
+	// 	Description:  fields.GetDescription(),
+	// 	Category:     fields.GetCategory(),
+	// 	Manufacturer: fields.GetManufacturer(),
+	// 	Weight:       fields.GetWeight(),
+	// 	Price:        fields.GetPrice(),
+	// 	BasePrice:    fields.GetBasePrice(),
+	// 	IssueYear:    fields.GetIssueYear(),
+	// }
+	// err := s.validate.Struct(&validateDto)
+	// if err != nil {
+	// 	logger.Error("validation failed", sl.Err(ValidationError(err.(validator.ValidationErrors))))
+	// 	return nil, status.Error(codes.InvalidArgument, ErrInvalid)
+	// }
+	// domainFields, err := converter.DtoToUpdateFields(&validateDto, req.UpdateMask)
+	// if err != nil {
+	// 	logger.Error("invalid dto setup", sl.Err(err))
+	// 	return nil, status.Error(codes.Internal, ErrInternal)
+	// }
+	// updatedProduct, err := s.provider.UpdateProduct(ctx, validateDto.Sku, domainFields, req.UpdateMask)
+
+	// if err != nil {
+	// 	if errors.Is(err, provider.ErrInvalidParams) {
+	// 		return nil, status.Error(codes.InvalidArgument, err.Error())
+	// 	}
+	// 	logger.Error("failed to update product", sl.Err(err))
+	// 	return nil, status.Error(codes.Internal, ErrInternal)
+	// }
+
+	// // Convert domain product to gRPC
+	// grpcProduct := ToGRPCProduct(updatedProduct) // implement this
+
+	// return &aiv1.UpdateProductResponse{
+	// 	Product: grpcProduct,
+	// }, nil
 }
 
 func (s *serverApi) ProductPageSizeCategory(ctx context.Context, req *aiv1.ProductPageSizeCategoryRequest) (*aiv1.ProductPageSizeCategoryResponse, error) {
