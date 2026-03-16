@@ -17,6 +17,7 @@ var (
 type ProductProvider interface {
 	ProductPageSize(ctx context.Context, page int64, size int64) ([]models.Product, int64, error)
 	ProductPageSizeCategory(ctx context.Context, offset int64, limit int64, categoryID int64) ([]models.Product, int64, error)
+	Products(ctx context.Context) ([]models.Product, error)
 }
 
 type ProviderService struct {
@@ -33,6 +34,23 @@ func New(
 		provider: provider,
 	}
 }
+
+func (ps *ProviderService) Products(ctx context.Context) ([]models.Product, error) {
+	const op = "services.provider.Products"
+	logger := ps.logger.With(
+		slog.String("op", op),
+	)
+	products, err := ps.provider.Products(ctx)
+	if err != nil {
+		if errors.Is(err, storage.ErrNoRows) {
+			logger.Warn("no rows found in products table")
+			return []models.Product{}, fmt.Errorf("%s: %w", op, ErrInvalidParams)
+		}
+		return []models.Product{}, fmt.Errorf("%s: %w", op, err)
+	}
+	return products, nil
+}
+
 func (ps *ProviderService) ProductPageSizeCategory(ctx context.Context, offset int64, limit int64, categoryID int64) ([]models.Product, int64, error) {
 	const op = "services.provider.ProductPageSize"
 	logger := ps.logger.With(

@@ -49,3 +49,22 @@ LIMIT $2;
 SELECT COUNT(category_id) AS total
 FROM products
 WHERE category_id = $1;
+
+-- name: Products :many
+SELECT 
+    p.id,          
+    p.sku,         
+    p.name,        
+    p.description, 
+    c.name AS category_name,
+    m.name AS manufacturer_name,
+    p.weight,
+    p.unit,   
+    p.price,       
+    p.baseprice,   
+    p.issueyear,
+    p.created_at,
+    p.updated_at   
+FROM products AS p
+INNER JOIN categories AS c ON p.category_id = c.id
+INNER JOIN manufacturers AS m ON p.manufacturer_id = m.id;

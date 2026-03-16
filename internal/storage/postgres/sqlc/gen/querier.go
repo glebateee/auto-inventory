@@ -15,6 +15,7 @@ type Querier interface {
 	ProductPageSizeCategory(ctx context.Context, arg ProductPageSizeCategoryParams) ([]ProductPageSizeCategoryRow, error)
 	ProductTotal(ctx context.Context) (int64, error)
 	ProductTotalCategory(ctx context.Context, categoryID pgtype.Int4) (int64, error)
+	Products(ctx context.Context) ([]ProductsRow, error)
 }
 
 var _ Querier = (*Queries)(nil)

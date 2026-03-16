@@ -52,6 +52,17 @@ func New(
 	}, nil
 }
 
+func (s *Storage) Products(ctx context.Context) ([]models.Product, error) {
+	sqlcProducts, err := s.querier.Products(ctx)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return []models.Product{}, storage.ErrNoRows
+		}
+		return []models.Product{}, err
+	}
+	return FromSqlcProducts(sqlcProducts), nil
+}
+
 func (s *Storage) ProductPageSizeCategory(
 	ctx context.Context,
 	offset int64,
@@ -62,7 +73,7 @@ func (s *Storage) ProductPageSizeCategory(
 	sqlcTotal, err := s.querier.ProductTotalCategory(ctx, pgCategoryId)
 	fmt.Println(sqlcTotal, categoryID)
 	if err != nil {
-		return nil, 0, err
+		return []models.Product{}, 0, err
 	}
 	sqlcProducts, err := s.querier.ProductPageSizeCategory(ctx, sqlc.ProductPageSizeCategoryParams{
 		Offset: int32(offset),
@@ -71,9 +82,9 @@ func (s *Storage) ProductPageSizeCategory(
 	})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, sqlcTotal, storage.ErrNoRows
+			return []models.Product{}, sqlcTotal, storage.ErrNoRows
 		}
-		return nil, sqlcTotal, err
+		return []models.Product{}, sqlcTotal, err
 	}
 	products := FromSqlcProductListCat(sqlcProducts)
 	return products, sqlcTotal, nil
@@ -82,14 +93,14 @@ func (s *Storage) ProductPageSizeCategory(
 func (s *Storage) ProductPageSize(ctx context.Context, page int64, size int64) ([]models.Product, int64, error) {
 	sqlcTotal, err := s.querier.ProductTotal(ctx)
 	if err != nil {
-		return nil, 0, err
+		return []models.Product{}, 0, err
 	}
 	sqlcProducts, err := s.querier.ProductPageSize(ctx, sqlc.ProductPageSizeParams{Offset: int32((page - 1) * size), Limit: int32(size)})
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil, sqlcTotal, storage.ErrNoRows
+			return []models.Product{}, sqlcTotal, storage.ErrNoRows
 		}
-		return nil, sqlcTotal, err
+		return []models.Product{}, sqlcTotal, err
 	}
 	products := FromSqlcProductList(sqlcProducts)
 	return products, sqlcTotal, nil

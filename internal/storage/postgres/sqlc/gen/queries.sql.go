@@ -191,3 +191,73 @@ func (q *Queries) ProductTotalCategory(ctx context.Context, categoryID pgtype.In
 	err := row.Scan(&total)
 	return total, err
 }
+
+const products = `-- name: Products :many
+SELECT 
+    p.id,          
+    p.sku,         
+    p.name,        
+    p.description, 
+    c.name AS category_name,
+    m.name AS manufacturer_name,
+    p.weight,
+    p.unit,   
+    p.price,       
+    p.baseprice,   
+    p.issueyear,
+    p.created_at,
+    p.updated_at   
+FROM products AS p
+INNER JOIN categories AS c ON p.category_id = c.id
+INNER JOIN manufacturers AS m ON p.manufacturer_id = m.id
+`
+
+type ProductsRow struct {
+	ID               int32              `json:"id"`
+	Sku              string             `json:"sku"`
+	Name             string             `json:"name"`
+	Description      pgtype.Text        `json:"description"`
+	CategoryName     string             `json:"category_name"`
+	ManufacturerName string             `json:"manufacturer_name"`
+	Weight           int32              `json:"weight"`
+	Unit             pgtype.Text        `json:"unit"`
+	Price            int32              `json:"price"`
+	Baseprice        int32              `json:"baseprice"`
+	Issueyear        int16              `json:"issueyear"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) Products(ctx context.Context) ([]ProductsRow, error) {
+	rows, err := q.db.Query(ctx, products)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ProductsRow
+	for rows.Next() {
+		var i ProductsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Sku,
+			&i.Name,
+			&i.Description,
+			&i.CategoryName,
+			&i.ManufacturerName,
+			&i.Weight,
+			&i.Unit,
+			&i.Price,
+			&i.Baseprice,
+			&i.Issueyear,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

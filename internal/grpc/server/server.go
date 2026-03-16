@@ -25,6 +25,7 @@ var (
 type Provider interface {
 	ProductPageSize(ctx context.Context, page int64, size int64) ([]models.Product, int64, error)
 	ProductPageSizeCategory(ctx context.Context, offset int64, limit int64, categoryID int64) ([]models.Product, int64, error)
+	Products(ctx context.Context) ([]models.Product, error)
 }
 
 type serverApi struct {
@@ -32,6 +33,23 @@ type serverApi struct {
 	logger   *slog.Logger
 	provider Provider
 	validate *validator.Validate
+}
+
+func (s *serverApi) ProductList(ctx context.Context, req *aiv1.ProductListRequest) (*aiv1.ProductListResponse, error) {
+	products, err := s.provider.Products(ctx)
+	if err != nil {
+		if errors.Is(err, provider.ErrInvalidParams) {
+			return nil, status.Errorf(codes.InvalidArgument, ErrInvalid)
+		}
+		return nil, status.Errorf(codes.Internal, ErrInternal)
+	}
+	return &aiv1.ProductListResponse{
+		Products: ToGRPCProductList(products),
+	}, nil
+}
+
+func (s *serverApi) UpdateProduct(context.Context, *aiv1.UpdateProductRequest) (*aiv1.UpdateProductResponse, error) {
+	panic("unimplemented")
 }
 
 func (s *serverApi) ProductPageSizeCategory(ctx context.Context, req *aiv1.ProductPageSizeCategoryRequest) (*aiv1.ProductPageSizeCategoryResponse, error) {
