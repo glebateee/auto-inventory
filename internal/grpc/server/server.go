@@ -18,7 +18,6 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
 const (
@@ -30,7 +29,8 @@ type Provider interface {
 	ProductPageSize(ctx context.Context, page int64, size int64) ([]models.Product, int64, error)
 	ProductPageSizeCategory(ctx context.Context, offset int64, limit int64, categoryID int64) ([]models.Product, int64, error)
 	Products(ctx context.Context) ([]models.Product, error)
-	UpdateProduct(ctx context.Context, sku string, fields *models.UpdateProductFields, mask *fieldmaskpb.FieldMask) (*models.Product, error)
+	//UpdateProduct(ctx context.Context, sku string, fields *models.UpdateProductFields, mask *fieldmaskpb.FieldMask) (*models.Product, error)
+	DeleteProductSku(ctx context.Context, sku string) error
 }
 
 type serverApi struct {
@@ -38,6 +38,27 @@ type serverApi struct {
 	logger   *slog.Logger
 	provider Provider
 	validate *validator.Validate
+}
+
+func (s *serverApi) DeleteProduct(ctx context.Context, req *aiv1.DeleteProductRequest) (*aiv1.DeleteProductResponse, error) {
+	const op = "serverApi.DeleteProduct"
+	logger := s.logger.With(
+		slog.String("op", op),
+	)
+	dto := grpcserver.DeleteProductDTO{
+		Sku: req.GetSku(),
+	}
+	if err := s.validate.Struct(&dto); err != nil {
+		logger.Error("validation error", sl.Err(ValidationError(err.(validator.ValidationErrors))))
+		return nil, status.Errorf(codes.InvalidArgument, ErrInvalid)
+	}
+	if err := s.provider.DeleteProductSku(ctx, dto.Sku); err != nil {
+		if errors.Is(err, provider.ErrInvalidParams) {
+			return nil, status.Error(codes.InvalidArgument, ErrInvalid)
+		}
+		return nil, status.Error(codes.Internal, ErrInternal)
+	}
+	return &aiv1.DeleteProductResponse{}, nil
 }
 
 func (s *serverApi) ProductList(ctx context.Context, req *aiv1.ProductListRequest) (*aiv1.ProductListResponse, error) {
@@ -80,28 +101,30 @@ func validateUpdateDTO(model *models.UpdateProductFields, grpcMsg *aiv1.UpdatePr
 	}
 	return fields, nil
 }
-func (s *serverApi) UpdateProduct(ctx context.Context, req *aiv1.UpdateProductRequest) (*aiv1.UpdateProductResponse, error) {
-	const op = "serverApi.UpdateProduct"
-	logger := s.logger.With(
-		slog.String("op", op),
-	)
-	if req.Fields == nil {
-		return nil, status.Error(codes.InvalidArgument, "fields must be provided")
-	}
-	if req.UpdateMask == nil || len(req.UpdateMask.Paths) == 0 {
-		return nil, status.Error(codes.InvalidArgument, "update_mask must be provided and non-empty")
-	}
-	model := &models.UpdateProductFields{}
 
-	fields, err := validateUpdateDTO(model, req.GetFields())
-	if err != nil {
-		logger.Error("validation dto failed", sl.Err(err))
-		return nil, status.Error(codes.Internal, ErrInternal)
-	}
-	fmt.Println(fields)
-	dto := grpcserver.UpdateProductDTO{}
-	converter.DtoToUpdateFields(model, req.GetUpdateMask())
-	return &aiv1.UpdateProductResponse{}, nil
+func (s *serverApi) UpdateProduct(ctx context.Context, req *aiv1.UpdateProductRequest) (*aiv1.UpdateProductResponse, error) {
+	return nil, status.Error(codes.Internal, "unimplemented method")
+	// const op = "serverApi.UpdateProduct"
+	// logger := s.logger.With(
+	// 	slog.String("op", op),
+	// )
+	// if req.Fields == nil {
+	// 	return nil, status.Error(codes.InvalidArgument, "fields must be provided")
+	// }
+	// if req.UpdateMask == nil || len(req.UpdateMask.Paths) == 0 {
+	// 	return nil, status.Error(codes.InvalidArgument, "update_mask must be provided and non-empty")
+	// }
+	// model := &models.UpdateProductFields{}
+
+	// fields, err := validateUpdateDTO(model, req.GetFields())
+	// if err != nil {
+	// 	logger.Error("validation dto failed", sl.Err(err))
+	// 	return nil, status.Error(codes.Internal, ErrInternal)
+	// }
+	// fmt.Println(fields)
+	// dto := grpcserver.UpdateProductDTO{}
+	// converter.DtoToUpdateFields(model, req.GetUpdateMask())
+	// return &aiv1.UpdateProductResponse{}, nil
 	// validateDto := grpcserver.UpdateProductDTO{
 	// 	Sku:          req.GetSku(),
 	// 	Name:         fields.GetName(),
@@ -151,8 +174,7 @@ func (s *serverApi) ProductPageSizeCategory(ctx context.Context, req *aiv1.Produ
 		Limit:      req.GetSize(),
 		CategoryID: req.GetCategoryId(),
 	}
-	err := s.validate.Struct(&validateDto)
-	if err != nil {
+	if err := s.validate.Struct(&validateDto); err != nil {
 		logger.Error("validation failed", sl.Err(ValidationError(err.(validator.ValidationErrors))))
 		return nil, status.Error(codes.InvalidArgument, ErrInvalid)
 	}

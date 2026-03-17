@@ -7,9 +7,7 @@ import (
 	"log/slog"
 
 	"github.com/glebateee/auto-inventory/internal/domain/models"
-	"github.com/glebateee/auto-inventory/internal/lib/sl"
 	"github.com/glebateee/auto-inventory/internal/storage"
-	"google.golang.org/protobuf/types/known/fieldmaskpb"
 )
 
 var (
@@ -20,7 +18,8 @@ type ProductProvider interface {
 	ProductPageSize(ctx context.Context, page int64, size int64) ([]models.Product, int64, error)
 	ProductPageSizeCategory(ctx context.Context, offset int64, limit int64, categoryID int64) ([]models.Product, int64, error)
 	Products(ctx context.Context) ([]models.Product, error)
-	UpdateProduct(ctx context.Context, sku string, fields *models.UpdateProductFields, mask *fieldmaskpb.FieldMask) (*models.Product, error)
+	//UpdateProduct(ctx context.Context, sku string, fields *models.UpdateProductFields, mask *fieldmaskpb.FieldMask) (*models.Product, error)
+	DeleteProductSku(ctx context.Context, sku string) error
 }
 
 type ProviderService struct {
@@ -38,26 +37,42 @@ func New(
 	}
 }
 
-func (ps *ProviderService) UpdateProduct(
-	ctx context.Context,
-	sku string,
-	fields *models.UpdateProductFields,
-	mask *fieldmaskpb.FieldMask,
-) (*models.Product, error) {
-	const op = "services.provider.UpdateProduct"
+// func (ps *ProviderService) UpdateProduct(
+// 	ctx context.Context,
+// 	sku string,
+// 	fields *models.UpdateProductFields,
+// 	mask *fieldmaskpb.FieldMask,
+// ) (*models.Product, error) {
+// 	const op = "services.provider.UpdateProduct"
+// 	logger := ps.logger.With(
+// 		slog.String("op", op),
+// 		slog.String("sku", sku),
+// 	)
+// 	logger.Info("updating product")
+// 	product, err := ps.provider.UpdateProduct(ctx, sku, fields, mask)
+// 	if err != nil {
+// 		logger.Error("failed to update product", sl.Err(err))
+// 		return nil, fmt.Errorf("%s: %w", op, err)
+// 	}
+
+// 	logger.Info("product updated successfully", slog.Int64("id", product.Id))
+// 	return product, nil
+// }
+
+func (ps *ProviderService) DeleteProductSku(ctx context.Context, sku string) error {
+	const op = "services.provider.DeleteProductSku"
 	logger := ps.logger.With(
 		slog.String("op", op),
-		slog.String("sku", sku),
 	)
-	logger.Info("updating product")
-	product, err := ps.provider.UpdateProduct(ctx, sku, fields, mask)
-	if err != nil {
-		logger.Error("failed to update product", sl.Err(err))
-		return nil, fmt.Errorf("%s: %w", op, err)
+	if err := ps.provider.DeleteProductSku(ctx, sku); err != nil {
+		if errors.Is(err, storage.ErrNoRows) {
+			logger.Warn("no rows found in products table")
+			return fmt.Errorf("%s: %w", op, ErrInvalidParams)
+		}
+		return fmt.Errorf("%s: %w", op, err)
 	}
-
-	logger.Info("product updated successfully", slog.Int64("id", product.Id))
-	return product, nil
+	logger.Info("successfully deleted product", slog.String("sku", sku))
+	return nil
 }
 
 func (ps *ProviderService) Products(ctx context.Context) ([]models.Product, error) {

@@ -11,6 +11,19 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const deleteProductBySku = `-- name: DeleteProductBySku :execrows
+DELETE FROM products
+WHERE sku = $1
+`
+
+func (q *Queries) DeleteProductBySku(ctx context.Context, sku string) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteProductBySku, sku)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const productPageSize = `-- name: ProductPageSize :many
 SELECT 
     p.id,          

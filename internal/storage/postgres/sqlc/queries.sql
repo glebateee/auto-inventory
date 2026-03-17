@@ -68,3 +68,8 @@ SELECT
 FROM products AS p
 INNER JOIN categories AS c ON p.category_id = c.id
 INNER JOIN manufacturers AS m ON p.manufacturer_id = m.id;
+
+-- name: DeleteProductBySku :execrows
+DELETE FROM products
+WHERE sku = $1;
+

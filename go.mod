@@ -3,7 +3,7 @@ module github.com/glebateee/auto-inventory
 go 1.24.0
 
 require (
-	github.com/glebateee/auto-proto v0.0.10
+	github.com/glebateee/auto-proto v0.0.11
 	github.com/ilyakaznacheev/cleanenv v1.5.0
 	github.com/stretchr/testify v1.11.1
 	google.golang.org/grpc v1.79.2

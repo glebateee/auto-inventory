@@ -22,3 +22,7 @@ type UpdateProductDTO struct {
 	BasePrice    int64  `validate:"omitempty,min=0"`
 	IssueYear    int64  `validate:"omitempty,min=1900,max=2100"`
 }
+
+type DeleteProductDTO struct {
+	Sku string `validate:"required,min=3,max=50"`
+}
