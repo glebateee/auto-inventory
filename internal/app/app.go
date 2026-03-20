@@ -36,12 +36,15 @@ func New(
 		panic(err)
 	}
 	prodProviderService := provider.New(logger, prodProviderStorage)
-	gRPCapp := grpcapp.New(
+	gRPCapp, err := grpcapp.New(
 		logger,
 		gRPChost,
 		gRPCport,
 		prodProviderService,
 	)
+	if err != nil {
+		panic(err)
+	}
 	return &App{
 		logger:  logger,
 		GRPCApp: gRPCapp,

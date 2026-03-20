@@ -7,5 +7,5 @@ db_config:
   user: "postgres"
   password: "postgres"
   host: "localhost"
-  port: 6666
+  port: 5432
   sslmode: "disable"

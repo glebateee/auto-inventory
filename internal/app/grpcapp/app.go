@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/glebateee/auto-inventory/internal/grpc/server"
+	"github.com/glebateee/auto-inventory/internal/grpc/server/options"
 	"google.golang.org/grpc"
 )
 
@@ -21,14 +22,21 @@ func New(
 	host string,
 	port int,
 	provider server.Provider,
-) *App {
-	srv := grpc.NewServer()
+) (*App, error) {
+	const op = "grpcapp.New"
+	tlsCreds, err := options.NewTLS()
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", op, err)
+	}
+	srv := grpc.NewServer(
+		grpc.Creds(tlsCreds),
+	)
 	server.Register(srv, logger, provider)
 	return &App{
 		logger: logger,
 		srv:    srv,
 		addr:   net.JoinHostPort(host, strconv.Itoa(port)),
-	}
+	}, nil
 }
 
 func (a *App) Start() error {

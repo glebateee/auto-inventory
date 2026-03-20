@@ -12,7 +12,7 @@ vars:
 
 # test main app configuration 
   ENV_TEST_LOCAL: ./tests/config/local.yaml
-  GOOSE_TEST_DBSTRING: 'dbname=test_inventory user=postgres password=postgres host=localhost port=6666 sslmode=disable'
+  GOOSE_TEST_DBSTRING: 'dbname=test_inventory user=postgres password=postgres host=localhost port=5432 sslmode=disable'
   GOOSE_TEST_MIGRATION_DIR: ./tests/migrations/postgres
   GOOSE_TEST_TABLE: 'public.goose_tests_migrations'
 
